@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: java-app
+      annotations:
+        instrumentation.opentelemetry.io/inject-java: "default/splunk-otel-collector"
     spec:
       containers:
         - name: java-app
