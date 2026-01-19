@@ -14,6 +14,14 @@ docker buildx build \
 ##Deploy resources to Kubernetes
 kubectl apply -f k8s/
 
+Resources include
+- MSSQL secret (db creds)
+- MSSQL database (MSSQL database deployment)
+- MSSQL configmap (script to populate database with sample data)
+- MSSQL init job (job to execute script)
+- Java application (simple java application)
+- Traffic generator (simple curl command to the java app that invokes database calls)
+
 ##Deploy Splunk Otel Collector using with Helm chart
 helm install splunk-otel-collector \
 --set="operatorcrds.install=true", \
