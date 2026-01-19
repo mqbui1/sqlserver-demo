@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app-traffic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-app-traffic
+  template:
+    metadata:
+      labels:
+        app: java-app-traffic
+    spec:
+      containers:
+        - name: curl
+          image: curlimages/curl:8.5.0
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                curl -s http://java-app:8080/hello
+                sleep 10
+              done
