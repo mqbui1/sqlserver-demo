@@ -10,7 +10,8 @@ public class DbLatencyService {
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * Database latency in seconds (default: 20).
+     * How many seconds to delay the DB query.
+     * Defaults to 20 if not provided.
      */
     @Value("${app.db-latency-seconds:20}")
     private int dbLatencySeconds;
@@ -20,19 +21,18 @@ public class DbLatencyService {
     }
 
     /**
-     * Executes a real database query with artificial latency added
-     * using SQL Server WAITFOR DELAY.
+     * Calls a SQL Server scalar UDF that performs the delay internally
+     * and returns the greeting message.
      *
-     * The delay occurs inside the same JDBC call so the span
-     * duration reflects true database time.
+     * This produces a SINGLE JDBC span with ~dbLatencySeconds duration.
      */
-    public String fetchGreetingWithLatency() {
+    public String getGreetingWithDbLatency() {
+        String sql = "SELECT dbo.slow_greeting(?)";
 
-        String sql = String.format("""
-            WAITFOR DELAY '00:00:%02d';
-            SELECT message FROM greetings WHERE id = 1;
-            """, dbLatencySeconds);
-
-        return jdbcTemplate.queryForObject(sql, String.class);
+        return jdbcTemplate.queryForObject(
+                sql,
+                String.class,
+                dbLatencySeconds
+        );
     }
 }
