@@ -67,48 +67,36 @@ END
 GO
 
 /* ---------------------------------------------------------
-   Create or replace slow_greeting function
+   Create or replace slow_greeting stored procedure
 --------------------------------------------------------- */
-RAISERROR ('Creating or updating dbo.slow_greeting function', 10, 1) WITH NOWAIT;
+RAISERROR ('Creating or updating dbo.slow_greeting stored procedure', 10, 1) WITH NOWAIT;
 GO
 
-CREATE OR ALTER FUNCTION dbo.slow_greeting (@seconds INT)
-RETURNS NVARCHAR(255)
+-- Drop if exists (safe for reruns)
+IF OBJECT_ID('dbo.slow_greeting', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.slow_greeting;
+GO
+
+CREATE PROCEDURE dbo.slow_greeting
+    @seconds INT
 AS
 BEGIN
+    SET NOCOUNT ON;
+
     DECLARE @delay CHAR(8);
+    SET @delay = RIGHT('00' + CAST(@seconds / 3600 AS VARCHAR(2)), 2) + ':' +
+                 RIGHT('00' + CAST((@seconds % 3600) / 60 AS VARCHAR(2)), 2) + ':' +
+                 RIGHT('00' + CAST(@seconds % 60 AS VARCHAR(2)), 2);
 
-    -- Build delay string safely: 00:00:SS
-    SET @delay = CONCAT(
-        '00:00:',
-        RIGHT('0' + CAST(@seconds AS VARCHAR(2)), 2)
-    );
-
-    -- Artificial latency INSIDE the query
     WAITFOR DELAY @delay;
 
-    DECLARE @msg NVARCHAR(255);
-    SELECT @msg = message FROM greetings WHERE id = 1;
-
-    RETURN @msg;
+    SELECT 'Hello after ' + CAST(@seconds AS VARCHAR) + ' seconds' AS message;
 END;
 GO
 
-RAISERROR ('dbo.slow_greeting function ready', 10, 1) WITH NOWAIT;
-GO
-
-/* ---------------------------------------------------------
-   Final validation
---------------------------------------------------------- */
-IF OBJECT_ID('dbo.slow_greeting') IS NULL
+-- Verification (fail job if missing)
+IF OBJECT_ID('dbo.slow_greeting', 'P') IS NULL
 BEGIN
-    RAISERROR ('ERROR: dbo.slow_greeting was not created!', 16, 1);
-END
-ELSE
-BEGIN
-    RAISERROR ('Validation successful: dbo.slow_greeting exists', 10, 1) WITH NOWAIT;
-END
-GO
-
-RAISERROR ('=== SQL Server init completed successfully ===', 10, 1) WITH NOWAIT;
+    RAISERROR('ERROR: dbo.slow_greeting was not created!', 16, 1);
+END;
 GO
