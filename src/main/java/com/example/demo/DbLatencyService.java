@@ -10,52 +10,29 @@ public class DbLatencyService {
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * Configurable DB latency (seconds).
-     * Default = 20 seconds if not set.
-     *
-     * Controlled via:
-     *   app.db-latency-seconds
-     *   or APP_DB_LATENCY_SECONDS
+     * Database latency in seconds (default: 20).
      */
     @Value("${app.db-latency-seconds:20}")
     private int dbLatencySeconds;
-
-    /**
-     * Safety cap to avoid accidental extreme delays
-     */
-    private static final int MAX_LATENCY_SECONDS = 60;
 
     public DbLatencyService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
-     * Adds artificial latency directly at the database layer
+     * Executes a real database query with artificial latency added
      * using SQL Server WAITFOR DELAY.
+     *
+     * The delay occurs inside the same JDBC call so the span
+     * duration reflects true database time.
      */
-    public void addDatabaseLatency() {
-        int effectiveLatency = Math.min(dbLatencySeconds, MAX_LATENCY_SECONDS);
+    public String fetchGreetingWithLatency() {
 
-        if (effectiveLatency <= 0) {
-            return; // latency disabled
-        }
+        String sql = String.format("""
+            WAITFOR DELAY '00:00:%02d';
+            SELECT message FROM greetings WHERE id = 1;
+            """, dbLatencySeconds);
 
-        String delay =
-            "WAITFOR DELAY '00:00:" + String.format("%02d", effectiveLatency) + "'";
-
-        jdbcTemplate.execute(delay);
-    }
-
-    /**
-     * Example query method that includes latency.
-     * Keeps latency logic centralized.
-     */
-    public String fetchGreeting() {
-        addDatabaseLatency();
-
-        return jdbcTemplate.queryForObject(
-            "SELECT message FROM greetings WHERE id = 1",
-            String.class
-        );
+        return jdbcTemplate.queryForObject(sql, String.class);
     }
 }
