@@ -1,48 +1,95 @@
--- Create database if it does not exist
+PRINT '=== SQL Server init starting ===';
+GO
+
+/* -------------------------------------------------
+   Ensure database exists
+------------------------------------------------- */
 IF DB_ID('demo') IS NULL
 BEGIN
+    PRINT 'Creating database [demo]';
     CREATE DATABASE demo;
-END;
+END
+ELSE
+BEGIN
+    PRINT 'Database [demo] already exists';
+END
 GO
 
 USE demo;
 GO
 
--- Create greetings table if it does not exist
-IF OBJECT_ID('dbo.greetings', 'U') IS NULL
+PRINT 'Using database [demo]';
+GO
+
+/* -------------------------------------------------
+   Create greetings table if needed
+------------------------------------------------- */
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.tables
+    WHERE name = 'greetings'
+)
 BEGIN
+    PRINT 'Creating table [greetings]';
+
     CREATE TABLE greetings (
         id INT PRIMARY KEY,
-        message VARCHAR(255)
+        message NVARCHAR(255) NOT NULL
     );
-END;
+END
+ELSE
+BEGIN
+    PRINT 'Table [greetings] already exists';
+END
 GO
 
--- Seed data (idempotent)
-IF NOT EXISTS (SELECT 1 FROM greetings WHERE id = 1)
+/* -------------------------------------------------
+   Seed data if missing
+------------------------------------------------- */
+IF NOT EXISTS (
+    SELECT 1 FROM greetings WHERE id = 1
+)
 BEGIN
+    PRINT 'Inserting seed greeting';
     INSERT INTO greetings (id, message)
     VALUES (1, 'Hello from Kubernetes + SQL Server!');
-END;
+END
+ELSE
+BEGIN
+    PRINT 'Seed greeting already exists';
+END
 GO
 
-----------------------------------------------------------------
--- Artificial latency function (Option 2)
--- This keeps the delay INSIDE a single DB query
-----------------------------------------------------------------
+/* -------------------------------------------------
+   Create or replace slow_greeting function
+------------------------------------------------- */
+PRINT 'Creating or updating dbo.slow_greeting function';
+GO
+
 CREATE OR ALTER FUNCTION dbo.slow_greeting (@seconds INT)
 RETURNS NVARCHAR(255)
 AS
 BEGIN
-    -- Artificial latency inside the database query
-    WAITFOR DELAY '00:00:' + RIGHT('0' + CAST(@seconds AS VARCHAR(2)), 2);
+    DECLARE @delay CHAR(8);
+
+    -- Build delay string safely: 00:00:SS
+    SET @delay = CONCAT(
+        '00:00:',
+        RIGHT('0' + CAST(@seconds AS VARCHAR(2)), 2)
+    );
+
+    -- Artificial latency INSIDE the query
+    WAITFOR DELAY @delay;
 
     DECLARE @msg NVARCHAR(255);
-
-    SELECT @msg = message
-    FROM greetings
-    WHERE id = 1;
+    SELECT @msg = message FROM greetings WHERE id = 1;
 
     RETURN @msg;
 END;
+GO
+
+PRINT 'dbo.slow_greeting function ready';
+GO
+
+PRINT '=== SQL Server init completed successfully ===';
 GO
