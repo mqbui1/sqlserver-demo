@@ -1,23 +1,27 @@
 package com.example.demo;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HelloController {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final DbLatencyService dbLatencyService;
 
-    public HelloController(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public HelloController(DbLatencyService dbLatencyService) {
+        this.dbLatencyService = dbLatencyService;
     }
 
+    /**
+     * Simple endpoint to demonstrate:
+     * - HTTP server span
+     * - JDBC client span
+     * - Artificial DB latency
+     *
+     * Visible automatically in Splunk APM.
+     */
     @GetMapping("/hello")
     public String hello() {
-        return jdbcTemplate.queryForObject(
-            "SELECT message FROM greetings WHERE id = 1",
-            String.class
-        );
+        return dbLatencyService.fetchGreeting();
     }
 }
