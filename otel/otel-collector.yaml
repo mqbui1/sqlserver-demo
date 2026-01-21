@@ -1,0 +1,131 @@
+clusterReceiver:
+  eventsEnabled: true
+  k8sObjects:
+    - name: events
+      mode: watch
+      namespaces: [default, apache, loadgen, splunk]
+    - name: pods
+      mode: watch
+      namespaces: [default, apache, loadgen, splunk]
+
+agent:
+  extraEnvs:
+    - name: WORKSHOP_ENVIRONMENT
+      valueFrom:
+        secretKeyRef:
+          name: workshop-secret
+          key: env
+    - name: SPLUNK_ACCESS_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: workshop-secret
+          key: access_token
+
+  config:
+    receivers:
+      sqlserver:
+        #datasource: "sqlserver://sa:Petclinic1!@petclinic-db:1433?database=petclinic&encrypt=false&trustServerCertificate=true"
+        server: mssql
+        username: sa
+        password: 'Petclinic1!'
+        port: 1433
+    
+        events:
+          db.server.query_sample:
+            enabled: true
+          db.server.top_query:
+            enabled: true
+            
+        resource_attributes:
+          sqlserver.instance.name:
+              enabled: true
+
+      receiver_creator:
+        receivers:
+          nginx:
+            rule: type == "port" && pod.name matches "nginx" && port == 8082
+            config:
+              endpoint: 'http://`endpoint`/nginx_status'
+
+          mysql/workshop:
+            rule: type == "port" && pod.name matches "mysql" && port == 3306
+            config:
+              tls:
+                insecure: true
+              endpoint: '`endpoint`'
+              username: root
+              password: root
+              database: LxvGChW075
+
+          redis/workshop:
+            rule: type == "port" && pod.name matches "redis-cart" && port == 6379
+            config:
+              endpoint: '`endpoint`'
+
+    exporters:
+        # Export metrics + logs via OTLP to Splunk Observability Cloud
+      otlphttp/splunk:
+        headers:
+          X-SF-Token: ${SPLUNK_ACCESS_TOKEN}
+        metrics_endpoint: https://ingest.us1.signalfx.com/v2/datapoint/otlp
+      # REQUIRED for DB Monitoring
+      otlphttp/dbmon:
+        headers:
+          X-SF-Token: ${SPLUNK_ACCESS_TOKEN}
+          X-splunk-instrumentation-library: dbmon
+        logs_endpoint: https://ingest.us1.signalfx.com/v3/event
+
+    processors:
+      resource/dbmon:
+        attributes:
+          - key: service.name
+            value: demo-db
+            action: upsert
+
+    extensions:
+      zpages:
+        endpoint: 0.0.0.0:55679
+
+    service:
+      pipelines:
+        # REQUIRED DB Monitoring pipeline
+            # Metrics pipeline — SQL Server metrics
+        metrics:
+          receivers: 
+            - sqlserver
+          processors: 
+            - memory_limiter
+            - batch
+          exporters:
+            - otlphttp/splunk
+        
+        logs/dbm:
+          receivers:
+            - sqlserver
+          processors:
+            - resource/dbmon
+            - memory_limiter
+            - batch
+            - resource
+          exporters:
+            - otlphttp/dbmon
+
+logsCollection:
+  extraFileLogs:
+    filelog/syslog:
+      include: [/var/log/syslog]
+      include_file_path: true
+      include_file_name: false
+      resource:
+        com.splunk.source: /var/log/syslog
+        host.name: 'EXPR(env("K8S_NODE_NAME"))'
+        com.splunk.sourcetype: syslog
+
+    filelog/auth_log:
+      include: [/var/log/auth.log]
+      include_file_path: true
+      include_file_name: false
+      resource:
+        com.splunk.source: /var/log/auth.log
+        host.name: 'EXPR(env("K8S_NODE_NAME"))'
+        com.splunk.sourcetype: auth_log
