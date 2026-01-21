@@ -20,6 +20,7 @@ spec:
                 -P ${SA_PASSWORD} \
                 -C \
                 -r 1 \
+                -m 1 \
                 -i /init/init.sql
           env:
             - name: SA_PASSWORD
