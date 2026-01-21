@@ -3,6 +3,7 @@
 Simple Spring Boot app using SQL Server on Kubernetes.
 
 ##To rebuild java app, use following commands and push to your repo
+
 docker buildx create --use
 
 docker buildx build \
