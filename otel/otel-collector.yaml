@@ -29,7 +29,8 @@ agent:
         username: sa
         password: 'Petclinic1!'
         port: 1433
-    
+        collection_interval: 1s
+        
         events:
           db.server.query_sample:
             enabled: true
