@@ -1,51 +1,38 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import javax.sql.DataSource;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
 
 @Service
 public class DbLatencyService {
 
-    private final DataSource dataSource;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
-     * Default delay if none is provided
+     * How many seconds to delay the DB query.
+     * Defaults to 20 if not provided.
      */
-    @Value("${app.db-latency-seconds:5}")
-    private int defaultDelaySeconds;
+    @Value("${app.db-latency-seconds:20}")
+    private int dbLatencySeconds;
 
-    public DbLatencyService(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public DbLatencyService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public String getGreeting(Integer delaySeconds) {
-        int delay = (delaySeconds != null) ? delaySeconds : defaultDelaySeconds;
+    /**
+     * Calls a SQL Server scalar UDF that performs the delay internally
+     * and returns the greeting message.
+     *
+     * This produces a SINGLE JDBC span with ~dbLatencySeconds duration.
+     */
+    public String getGreetingWithDbLatency() {
+        String sql = "SELECT dbo.slow_greeting(?)";
 
-        try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt =
-                     conn.prepareCall("{ call dbo.slow_greeting(?) }")) {
-
-            stmt.setInt(1, delay);
-
-            boolean hasResultSet = stmt.execute();
-
-            if (hasResultSet) {
-                try (ResultSet rs = stmt.getResultSet()) {
-                    if (rs.next()) {
-                        return rs.getString(1);
-                    }
-                }
-            }
-
-            return "No greeting returned";
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to call dbo.slow_greeting", e);
-        }
+        return jdbcTemplate.queryForObject(
+                sql,
+                String.class,
+                dbLatencySeconds
+        );
     }
 }
