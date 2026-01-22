@@ -12,7 +12,7 @@ public class DbLatencyService {
     /**
      * Database latency in seconds (default: 20).
      */
-    @Value("${app.db-latency-seconds:20}")
+    @Value("${app.db-latency-seconds:0}")
     private int dbLatencySeconds;
 
     public DbLatencyService(JdbcTemplate jdbcTemplate) {
