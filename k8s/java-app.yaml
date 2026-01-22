@@ -35,7 +35,7 @@ spec:
                   name: mssql-secret
                   key: SA_PASSWORD
             - name: APP_DB_LATENCY_SECONDS
-              value: "20"
+              value: "0"
             - name: OTEL_INSTRUMENTATION_SPLUNK_JDBC_ENABLED
               value: "true"
 ---
