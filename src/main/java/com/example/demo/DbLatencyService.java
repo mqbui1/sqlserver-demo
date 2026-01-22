@@ -27,11 +27,17 @@ public class DbLatencyService {
      * duration reflects true database time.
      */
     public String fetchGreetingWithLatency() {
-
+        /*
         String sql = String.format("""
             WAITFOR DELAY '00:00:%02d';
             SELECT message FROM greetings WHERE id = 1;
             """, dbLatencySeconds);
+        */
+        String sql = """
+            SELECT message
+            FROM greetings
+            WHERE id = 1;
+            """;
 
         return jdbcTemplate.queryForObject(sql, String.class);
     }
