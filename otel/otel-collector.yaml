@@ -82,6 +82,12 @@ agent:
           - key: service.name
             value: demo-db
             action: upsert
+      spanmetrics:
+        metrics_exporter: signalfx
+        dimensions:
+          - name: service.name
+          - name: db.system
+          - name: db.name
 
     extensions:
       zpages:
@@ -89,8 +95,10 @@ agent:
 
     service:
       pipelines:
-        # REQUIRED DB Monitoring pipeline
-            # Metrics pipeline — SQL Server metrics
+        traces:
+          processors:
+            - batch
+            - spanmetrics
         metrics:
           receivers: 
             - sqlserver
