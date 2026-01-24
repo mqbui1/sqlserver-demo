@@ -93,12 +93,26 @@ agent:
           - key: service.name
             value: demo-db
             action: upsert
-      spanmetrics:
-        metrics_exporter: otlphttp/splunk
-        dimensions:
-          - name: service.name
-          - name: db.system
-          - name: db.name
+      # Select DB spans only
+      span/db:
+        include:
+          match_type: regexp
+          attributes:
+            - key: db.system
+              value: .+
+    
+      # Generate latency metrics from spans
+      metricsgeneration/db_latency:
+        rules:
+          - name: db.query.latency
+            unit: ms
+            type: histogram
+            histogram:
+              value: span.duration
+            dimensions:
+              - service.name
+              - db.system
+              - db.name
 
     extensions:
       zpages:
@@ -111,7 +125,11 @@ agent:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [memory_limiter, batch, spanmetrics]
+          processors:
+            - memory_limiter
+            - span/db
+            - metricsgeneration/db_latency
+            - batch
           exporters: [otlphttp/splunk]
 
         metrics:
