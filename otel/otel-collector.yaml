@@ -26,6 +26,9 @@ agent:
       check_interval: 1s
       limit_mib: 400
       spike_limit_mib: 100
+    batch:
+      send_batch_size: 1024
+      timeout: 5s
     receivers:
       otlp:
         protocols:
