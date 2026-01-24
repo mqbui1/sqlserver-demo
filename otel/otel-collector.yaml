@@ -22,18 +22,7 @@ agent:
           key: access_token
 
   config:
-    memory_limiter:
-      check_interval: 1s
-      limit_mib: 400
-      spike_limit_mib: 100
-    batch:
-      send_batch_size: 1024
-      timeout: 5s
     receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
       sqlserver:
         #datasource: "sqlserver://sa:Petclinic1!@petclinic-db:1433?database=petclinic&encrypt=false&trustServerCertificate=true"
         server: mssql
@@ -93,88 +82,34 @@ agent:
           - key: service.name
             value: demo-db
             action: upsert
-      memory_limiter:
-        check_interval: 1s
-        limit_mib: 400
-        spike_limit_mib: 100
-    
-      batch:
-        send_batch_size: 1024
-        timeout: 5s
-    
-      span/db:
-        include:
-          match_type: regexp
-          attributes:
-            - key: db.system
-              value: .+
-
-      spanmetrics:
-        metrics_exporter: otlphttp/splunk
-        dimensions:
-          - name: db.system
-          - name: db.name
-          - name: db.operation
-        latency_histogram:
-          buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
-
 
     extensions:
       zpages:
         endpoint: 0.0.0.0:55679
-      health_check:
-        endpoint: 0.0.0.0:13133
 
     service:
-      extensions: [health_check]
       pipelines:
-        traces:
-          receivers: [otlp]
-          processors:
-            - memory_limiter
-            - span/db
-            - spanmetrics
-            - batch
-          exporters: [otlphttp/splunk]
-
+        # REQUIRED DB Monitoring pipeline
+            # Metrics pipeline — SQL Server metrics
         metrics:
-          receivers: [sqlserver]
-          processors: [memory_limiter, batch]
-          exporters: [otlphttp/splunk]
-
-        logs/dbm:
-          receivers: [sqlserver]
-          processors: [resource/dbmon, memory_limiter, batch]
-          exporters: [otlphttp/dbmon]
-
-    # service:
-    #   extensions:
-    #     - health_check
-    #   pipelines:
-    #     traces:
-    #       processors:
-    #         - batch
-    #         - spanmetrics
-    #     metrics:
-    #       receivers: 
-    #         - sqlserver
-    #       processors: 
-    #         - memory_limiter
-    #         - batch
-    #       exporters:
-    #         - otlphttp/splunk
+          receivers: 
+            - sqlserver
+          processors: 
+            - memory_limiter
+            - batch
+          exporters:
+            - otlphttp/splunk
         
-    #     logs/dbm:
-    #       receivers:
-    #         - sqlserver
-    #       processors:
-    #         - resource/dbmon
-    #         - memory_limiter
-    #         - batch
-    #         - resource
-    #       exporters:
-    #         - otlphttp/dbmon
-      
+        logs/dbm:
+          receivers:
+            - sqlserver
+          processors:
+            - resource/dbmon
+            - memory_limiter
+            - batch
+            - resource
+          exporters:
+            - otlphttp/dbmon
 
 logsCollection:
   extraFileLogs:
