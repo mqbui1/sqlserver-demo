@@ -23,6 +23,10 @@ agent:
 
   config:
     receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
       sqlserver:
         #datasource: "sqlserver://sa:Petclinic1!@petclinic-db:1433?database=petclinic&encrypt=false&trustServerCertificate=true"
         server: mssql
@@ -96,32 +100,51 @@ agent:
         endpoint: 0.0.0.0:13133
 
     service:
-      extensions:
-        - health_check
+      extensions: [health_check]
       pipelines:
         traces:
-          processors:
-            - batch
-            - spanmetrics
+          receivers: [otlp]
+          processors: [memory_limiter, batch, spanmetrics]
+          exporters: [otlphttp/splunk]
+
         metrics:
-          receivers: 
-            - sqlserver
-          processors: 
-            - memory_limiter
-            - batch
-          exporters:
-            - otlphttp/splunk
-        
+          receivers: [sqlserver]
+          processors: [memory_limiter, batch]
+          exporters: [otlphttp/splunk]
+
         logs/dbm:
-          receivers:
-            - sqlserver
-          processors:
-            - resource/dbmon
-            - memory_limiter
-            - batch
-            - resource
-          exporters:
-            - otlphttp/dbmon
+          receivers: [sqlserver]
+          processors: [resource/dbmon, memory_limiter, batch]
+          exporters: [otlphttp/dbmon]
+
+    # service:
+    #   extensions:
+    #     - health_check
+    #   pipelines:
+    #     traces:
+    #       processors:
+    #         - batch
+    #         - spanmetrics
+    #     metrics:
+    #       receivers: 
+    #         - sqlserver
+    #       processors: 
+    #         - memory_limiter
+    #         - batch
+    #       exporters:
+    #         - otlphttp/splunk
+        
+    #     logs/dbm:
+    #       receivers:
+    #         - sqlserver
+    #       processors:
+    #         - resource/dbmon
+    #         - memory_limiter
+    #         - batch
+    #         - resource
+    #       exporters:
+    #         - otlphttp/dbmon
+      
 
 logsCollection:
   extraFileLogs:
