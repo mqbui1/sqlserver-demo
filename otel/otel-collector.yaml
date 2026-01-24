@@ -93,21 +93,31 @@ agent:
           - key: service.name
             value: demo-db
             action: upsert
-      # Filter DB spans
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 400
+        spike_limit_mib: 100
+    
+      batch:
+        send_batch_size: 1024
+        timeout: 5s
+    
       span/db:
         include:
           match_type: regexp
           attributes:
             - key: db.system
               value: .+
-    
-      # Generate latency metric from spans
-      metricsgeneration/db_latency:
-        rules:
-          - name: db.query.latency.ms
-            unit: ms
-            type: gauge
-            value: span.duration
+
+      spanmetrics:
+        metrics_exporter: otlphttp/splunk
+        dimensions:
+          - name: db.system
+          - name: db.name
+          - name: db.operation
+        latency_histogram:
+          buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+
 
     extensions:
       zpages:
@@ -123,7 +133,7 @@ agent:
           processors:
             - memory_limiter
             - span/db
-            - metricsgeneration/db_latency
+            - spanmetrics
             - batch
           exporters: [otlphttp/splunk]
 
