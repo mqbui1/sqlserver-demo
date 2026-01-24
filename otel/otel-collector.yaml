@@ -93,7 +93,7 @@ agent:
           - key: service.name
             value: demo-db
             action: upsert
-      # Select DB spans only
+      # Filter DB spans
       span/db:
         include:
           match_type: regexp
@@ -101,18 +101,13 @@ agent:
             - key: db.system
               value: .+
     
-      # Generate latency metrics from spans
+      # Generate latency metric from spans
       metricsgeneration/db_latency:
         rules:
-          - name: db.query.latency
+          - name: db.query.latency.ms
             unit: ms
-            type: histogram
-            histogram:
-              value: span.duration
-            dimensions:
-              - service.name
-              - db.system
-              - db.name
+            type: gauge
+            value: span.duration
 
     extensions:
       zpages:
