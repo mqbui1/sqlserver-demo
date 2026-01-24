@@ -9,8 +9,6 @@ clusterReceiver:
       namespaces: [default, apache, loadgen, splunk]
 
 agent:
-  configMap:
-    create: true
   extraEnvs:
     - name: WORKSHOP_ENVIRONMENT
       valueFrom:
