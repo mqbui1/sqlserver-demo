@@ -1,6 +1,13 @@
-# SQL Server Demo
+#Docker login
+docker login
 
-Simple Spring Boot app using SQL Server on Kubernetes.
+#Download docker buildx
+curl -fL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 \
+  -o ~/.docker/cli-plugins/docker-buildx
+
+chmod +x ~/.docker/cli-plugins/docker-buildx
+
+docker buildx version
 
 #To build java app, use following commands and push to your repo
 docker buildx create --use
