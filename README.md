@@ -2,8 +2,7 @@
 
 Simple Spring Boot app using SQL Server on Kubernetes.
 
-##To rebuild java app, use following commands and push to your repo
-
+#To build java app, use following commands and push to your repo
 docker buildx create --use
 
 docker buildx build \
@@ -12,18 +11,10 @@ docker buildx build \
   --push \
   .
 
-##Deploy resources to Kubernetes
+#Deploy resources
 kubectl apply -f k8s/
 
-Resources include
-- MSSQL secret (db creds)
-- MSSQL database (MSSQL database deployment)
-- MSSQL configmap (script to populate database with sample data)
-- MSSQL init job (job to execute script)
-- Java application (simple java application)
-- Traffic generator (simple curl command to the java app that invokes database calls)
-
-##Deploy Splunk Otel Collector using with Helm chart
+#Deploy Otel collector
 helm install splunk-otel-collector \
 --set="operatorcrds.install=true", \
 --set="operator.enabled=true", \
@@ -38,4 +29,4 @@ helm install splunk-otel-collector \
 --set="splunkPlatform.token=$HEC_TOKEN" \
 --set="splunkPlatform.index=splunk4rookies-workshop" \
 splunk-otel-collector-chart/splunk-otel-collector \
--f ~/workshop/k3s/otel-collector-sqlserverdemo.yaml
+-f otel/otel-collector.yaml
