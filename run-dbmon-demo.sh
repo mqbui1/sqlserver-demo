@@ -26,8 +26,6 @@ pe "docker buildx build \
   --push \
   ."
 
-pe "kubectl apply -f k8s/"
-
 pe ". check_env.sh"
 
 pe "helm install splunk-otel-collector \
@@ -45,3 +43,6 @@ pe "helm install splunk-otel-collector \
 --set="splunkPlatform.index=splunk4rookies-workshop" \
 splunk-otel-collector-chart/splunk-otel-collector \
 -f otel/otel-collector.yaml"
+
+pe "kubectl apply -f k8s/"
+
