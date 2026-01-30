@@ -18,9 +18,6 @@ docker buildx build \
   --push \
   .
 
-#Deploy resources
-kubectl apply -f k8s/
-
 #Deploy Otel collector
 helm install splunk-otel-collector \
 --set="operatorcrds.install=true", \
@@ -37,3 +34,7 @@ helm install splunk-otel-collector \
 --set="splunkPlatform.index=splunk4rookies-workshop" \
 splunk-otel-collector-chart/splunk-otel-collector \
 -f otel/otel-collector.yaml
+
+#Deploy resources
+kubectl apply -f k8s/
+
