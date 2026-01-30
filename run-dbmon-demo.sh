@@ -9,7 +9,14 @@
 clear
 
 # Put your stuff here
-pe ". check_env.sh"
+pe "docker login"
+
+pe "curl -fL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 \
+  -o ~/.docker/cli-plugins/docker-buildx"
+
+pe "chmod +x ~/.docker/cli-plugins/docker-buildx"
+
+pe "docker buildx version"
 
 pe "docker buildx create --use"
 
@@ -20,6 +27,8 @@ pe "docker buildx build \
   ."
 
 pe "kubectl apply -f k8s/"
+
+pe ". check_env.sh"
 
 pe "helm install splunk-otel-collector \
 --set="operatorcrds.install=true", \
