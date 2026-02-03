@@ -38,8 +38,6 @@ spec:
               value: "0"
             - name: OTEL_INSTRUMENTATION_SPLUNK_JDBC_ENABLED
               value: "true"
-            - name: JAVA_TOOL_OPTIONS
-              value: "-Dotel.semconv-stability.opt-in=database"
 ---
 apiVersion: v1
 kind: Service
