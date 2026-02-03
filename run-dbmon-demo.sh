@@ -34,6 +34,8 @@ pe "docker buildx build \
 
 pe ". check_env.sh"
 
+pe "helm repo add splunk-otel-collector-chart https://signalfx.github.io/splunk-otel-collector-chart && helm repo update"
+
 pe "helm install splunk-otel-collector \
 --set="operatorcrds.install=true", \
 --set="operator.enabled=true", \
