@@ -15,6 +15,8 @@ pe "sudo apt-get install -y pv"
 
 pe "docker login"
 
+pe "mkdir -p ~/.docker/cli-plugins"
+
 pe "curl -fL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 \
   -o ~/.docker/cli-plugins/docker-buildx"
 
