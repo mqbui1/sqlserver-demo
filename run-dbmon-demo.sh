@@ -9,6 +9,10 @@
 clear
 
 # Put your stuff here
+pe "sudo apt-get update"
+
+pe "sudo apt-get install -y pv"
+
 pe "docker login"
 
 pe "curl -fL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 \
