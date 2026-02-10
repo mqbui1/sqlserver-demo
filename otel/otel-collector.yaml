@@ -65,7 +65,8 @@ agent:
               endpoint: '`endpoint`'
 
           sqlserver:
-            enabled: false 
+            type: port
+            rule: "false"
 
     exporters:
         # Export metrics + logs via OTLP to Splunk Observability Cloud
