@@ -64,10 +64,6 @@ agent:
             config:
               endpoint: '`endpoint`'
 
-          sqlserver:
-            type: k8s
-            rule: "false"
-
     exporters:
         # Export metrics + logs via OTLP to Splunk Observability Cloud
       otlphttp/splunk:
