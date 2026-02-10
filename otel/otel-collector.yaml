@@ -1,5 +1,9 @@
 clusterReceiver:
   eventsEnabled: true
+
+  splunkDiscovery:
+    enabled: false
+  
   k8sObjects:
     - name: events
       mode: watch
@@ -20,6 +24,9 @@ agent:
         secretKeyRef:
           name: workshop-secret
           key: access_token
+
+  splunkDiscovery:
+    enabled: false
 
   config:
     receivers:
