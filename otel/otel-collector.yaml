@@ -22,6 +22,9 @@ agent:
           name: workshop-secret
           key: access_token
 
+  discovery:
+    disabledTypes: ["sqlserver"]
+
   config:
     receivers:
       sqlserver:
