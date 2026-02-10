@@ -9,10 +9,6 @@
 clear
 
 # Put your stuff here
-pe "sudo apt-get update"
-
-pe "sudo apt-get install -y pv"
-
 pe "docker login"
 
 pe "mkdir -p ~/.docker/cli-plugins"
