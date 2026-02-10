@@ -39,7 +39,6 @@ pe "helm install splunk-otel-collector \
 --set="splunkObservability.accessToken=$ACCESS_TOKEN" \
 --set="clusterName=$INSTANCE-k3s-cluster" \
 --set="splunkObservability.profilingEnabled=true" \
---set="agent.discovery.enabled=true" \
 --set="agent.service.enabled=true"  \
 --set="environment=$INSTANCE-workshop" \
 --set="splunkPlatform.endpoint=$HEC_URL" \
