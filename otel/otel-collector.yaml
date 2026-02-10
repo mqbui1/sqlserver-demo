@@ -1,9 +1,6 @@
 clusterReceiver:
   eventsEnabled: true
 
-  splunkDiscovery:
-    enabled: false
-  
   k8sObjects:
     - name: events
       mode: watch
@@ -24,9 +21,6 @@ agent:
         secretKeyRef:
           name: workshop-secret
           key: access_token
-
-  splunkDiscovery:
-    enabled: false
 
   config:
     receivers:
@@ -69,6 +63,9 @@ agent:
             rule: type == "port" && pod.name matches "redis-cart" && port == 6379
             config:
               endpoint: '`endpoint`'
+
+          sqlserver:
+            rule: "false"
 
     exporters:
         # Export metrics + logs via OTLP to Splunk Observability Cloud
