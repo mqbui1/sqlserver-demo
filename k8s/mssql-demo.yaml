@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mssql-demo
+  name: mssql
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mssql-demo
+      app: mssql
   template:
     metadata:
       labels:
-        app: mssql-demo
+        app: mssql
     spec:
       containers:
       - name: mssql
