@@ -12,31 +12,6 @@ spec:
       labels:
         app: mssql
     spec:
-      # Init container runs first to set up the database
-      initContainers:
-      - name: mssql-init
-        image: mcr.microsoft.com/mssql-tools
-        command:
-          - /bin/bash
-          - -c
-          - |
-            # Wait for SQL Server to start
-            until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; do
-              echo "Waiting for SQL Server..."
-              sleep 2
-            done
-            echo "SQL Server is ready. Running init script..."
-            /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P "$SA_PASSWORD" -i /init/init.sql
-        env:
-        - name: SA_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mssql-secret
-              key: SA_PASSWORD
-        volumeMounts:
-        - name: init-scripts
-          mountPath: /init
-
       containers:
       - name: mssql
         image: mcr.microsoft.com/mssql/server:2019-latest
@@ -50,11 +25,3 @@ spec:
             secretKeyRef:
               name: mssql-secret
               key: SA_PASSWORD
-        volumeMounts:
-        - name: init-scripts
-          mountPath: /docker-entrypoint-initdb.d
-
-      volumes:
-      - name: init-scripts
-        configMap:
-          name: mssql-init-scripts
