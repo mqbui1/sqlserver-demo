@@ -13,59 +13,62 @@ spec:
         app: mssql-demo
     spec:
       containers:
-      - name: mssql
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-        - name: ACCEPT_EULA
-          value: "Y"
-        - name: SA_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mssql-secret
-              key: SA_PASSWORD
-        ports:
-        - containerPort: 1433
-        volumeMounts:
-        - name: mssql-data
-          mountPath: /var/opt/mssql
+        - name: mssql
+          image: mcr.microsoft.com/mssql/server:2019-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mssql-secret
+                  key: SA_PASSWORD
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
       initContainers:
-      - name: init-demo-db
-        image: mcr.microsoft.com/mssql-tools:latest
-        command:
-          - /bin/sh
-          - -c
-          - |
-            echo "Waiting for SQL Server to accept connections..."
-            for i in $(seq 1 30); do
-              /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q "SELECT 1" && break
-              echo "SQL Server not ready yet, sleeping 5s..."
-              sleep 5
-            done
-            echo "Creating demo database, table, and initial row..."
-            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q "
+        - name: init-demo-db
+          image: mcr.microsoft.com/mssql-tools
+          env:
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mssql-secret
+                  key: SA_PASSWORD
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Waiting for SQL Server to accept connections..."
+              until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" &> /dev/null
+              do
+                echo "SQL Server not ready yet, sleeping 5s..."
+                sleep 5
+              done
+
+              echo "SQL Server is ready! Creating database and table..."
+              /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "
               IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'demo')
               BEGIN
-                CREATE DATABASE demo;
+                  CREATE DATABASE demo;
               END
-              USE demo;
+              "
+              /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d demo -Q "
               IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'greetings')
               BEGIN
-                CREATE TABLE greetings (
-                  id INT PRIMARY KEY,
-                  message VARCHAR(255)
-                );
+                  CREATE TABLE greetings (
+                      id INT PRIMARY KEY,
+                      message VARCHAR(255)
+                  );
               END
+              "
+              /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d demo -Q "
               IF NOT EXISTS (SELECT * FROM greetings WHERE id = 1)
               BEGIN
-                INSERT INTO greetings VALUES (1, 'Hello from Kubernetes + SQL Server!');
+                  INSERT INTO greetings VALUES (1, 'Hello from Kubernetes + SQL Server!');
               END
-            "
-        env:
-        - name: SA_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mssql-secret
-              key: SA_PASSWORD
-      volumes:
-      - name: mssql-data
-        emptyDir: {}
+              "
+              echo "Database and table setup complete!"
