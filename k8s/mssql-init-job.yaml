@@ -15,11 +15,11 @@ spec:
             - -c
             - |
               echo "Waiting for SQL Server to be ready..."
-              until /opt/mssql-tools18/bin/sqlcmd -S tcp:mssql,1433 -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" -l 5 &>/dev/null; do
-                echo "$(date) - SQL Server not ready, sleeping 5s..."
+              until /opt/mssql-tools18/bin/sqlcmd -S $MSSQL_HOST -U sa -P "$SA_PASSWORD" -d master -Q "SELECT 1" &>/dev/null; do
+                echo "SQL Server not ready yet..."
                 sleep 5
               done
-              echo "SQL Server is ready. Running init script..."
+              echo "SQL Server is up — initializing database..."
 
               /opt/mssql-tools18/bin/sqlcmd \
                 -S tcp:mssql,1433 \
