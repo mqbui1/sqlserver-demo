@@ -37,12 +37,12 @@ spec:
           - |
             echo "Waiting for SQL Server to accept connections..."
             for i in $(seq 1 30); do
-              /opt/mssql-tools/bin/sqlcmd -S mssql:1433 -U sa -P $SA_PASSWORD -Q "SELECT 1" && break
+              /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q "SELECT 1" && break
               echo "SQL Server not ready yet, sleeping 5s..."
               sleep 5
             done
             echo "Creating demo database, table, and initial row..."
-            /opt/mssql-tools/bin/sqlcmd -S mssql:1433 -U sa -P $SA_PASSWORD -Q "
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q "
               IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'demo')
               BEGIN
                 CREATE DATABASE demo;
