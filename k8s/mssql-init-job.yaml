@@ -14,13 +14,18 @@ spec:
             - /bin/bash
             - -c
             - |
+              # Wait until SQL Server is ready
+              until /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" &>/dev/null; do
+                echo "Waiting for SQL Server..."
+                sleep 5
+              done
+              
+              echo "Running init script..."
               /opt/mssql-tools18/bin/sqlcmd \
                 -S mssql \
                 -U sa \
-                -P ${SA_PASSWORD} \
-                -C \
-                -r 1 \
-                -m 1 \
+                -P "${SA_PASSWORD}" \
+                -b \
                 -i /init/init.sql
           env:
             - name: SA_PASSWORD
