@@ -16,7 +16,7 @@ clusterReceiver:
   config:
     receivers:
       sqlserver:
-        server: mssql
+        server: mssql-demo
         port: 1433
         username: sa
         password: ${env:MSSQL_SA_PASSWORD}
