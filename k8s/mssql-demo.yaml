@@ -25,37 +25,29 @@ spec:
                 secretKeyRef:
                   name: mssql-secret
                   key: SA_PASSWORD
-          resources:
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
-      initContainers:
-        - name: init-demo-db
-          image: mcr.microsoft.com/mssql-tools
-          env:
-            - name: SA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mssql-secret
-                  key: SA_PASSWORD
           command:
             - /bin/bash
             - -c
             - |
-              echo "Waiting for SQL Server to accept connections..."
+              # Start SQL Server in background
+              /opt/mssql/bin/sqlservr &
+
+              echo "Waiting for SQL Server to start..."
               until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" &> /dev/null
               do
                 echo "SQL Server not ready yet, sleeping 5s..."
                 sleep 5
               done
 
-              echo "SQL Server is ready! Creating database and table..."
+              echo "SQL Server is up! Creating database and table..."
+
               /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "
               IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'demo')
               BEGIN
                   CREATE DATABASE demo;
               END
               "
+
               /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d demo -Q "
               IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'greetings')
               BEGIN
@@ -65,10 +57,15 @@ spec:
                   );
               END
               "
+
               /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d demo -Q "
               IF NOT EXISTS (SELECT * FROM greetings WHERE id = 1)
               BEGIN
                   INSERT INTO greetings VALUES (1, 'Hello from Kubernetes + SQL Server!');
               END
               "
+
               echo "Database and table setup complete!"
+              
+              # Keep SQL Server running in foreground
+              wait
