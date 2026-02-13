@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: mssql-init
-        image: mcr.microsoft.com/mssql-tools:18.1.1
+        image: mcr.microsoft.com/mssql/server:2022-latest
         env:
         - name: SA_PASSWORD
           valueFrom:
