@@ -2,41 +2,51 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mssql-init
+  namespace: default
 spec:
-  backoffLimit: 5
   template:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: init
-          image: mcr.microsoft.com/mssql/server:2022-latest
-          command:
-            - /bin/bash
-            - -c
-            - |
-              echo "Waiting for SQL Server to be ready..."
-              until /opt/mssql-tools18/bin/sqlcmd -S $MSSQL_HOST -U sa -P "$SA_PASSWORD" -d master -Q "SELECT 1" &>/dev/null; do
-                echo "SQL Server not ready yet..."
-                sleep 5
-              done
-              echo "SQL Server is up — initializing database..."
+      - name: mssql-init
+        image: mcr.microsoft.com/mssql-tools:18.1.1
+        env:
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mssql
+              key: SA_PASSWORD
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e
 
-              /opt/mssql-tools18/bin/sqlcmd \
-                -S tcp:mssql,1433 \
-                -U sa \
-                -P "${SA_PASSWORD}" \
-                -b \
-                -i /init/init.sql
-          env:
-            - name: SA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mssql-secret
-                  key: SA_PASSWORD
-          volumeMounts:
-            - name: init-sql
-              mountPath: /init
-      volumes:
+            echo "Waiting for SQL Server to be ready..."
+            until /opt/mssql-tools18/bin/sqlcmd -S tcp:mssql,1433 -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" &>/dev/null; do
+              echo "SQL Server not ready yet, sleeping 5s..."
+              sleep 5
+            done
+
+            echo "SQL Server is ready. Running init script..."
+            /opt/mssql-tools18/bin/sqlcmd -S tcp:mssql,1433 -U sa -P "${SA_PASSWORD}" -b -i /init/init.sql
+            echo "Init script completed successfully."
+        volumeMounts:
         - name: init-sql
-          configMap:
-            name: mssql-init
+          mountPath: /init
+      volumes:
+      - name: init-sql
+        configMap:
+          name: mssql-init-sql
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mssql-init-sql
+  namespace: default
+data:
+  init.sql: |
+    -- Your SQL initialization here
+    CREATE DATABASE demo;
+    CREATE TABLE demo.greetings (id INT PRIMARY KEY, message NVARCHAR(100));
+    INSERT INTO demo.greetings VALUES (1, 'Hello, world!');
