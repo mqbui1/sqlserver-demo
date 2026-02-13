@@ -12,7 +12,7 @@ spec:
         - name: SA_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mssql
+              name: mssql-secret
               key: SA_PASSWORD
         command: [ "/bin/bash", "-c" ]
         args:
