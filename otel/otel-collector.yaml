@@ -33,6 +33,15 @@ clusterReceiver:
             enabled: true
 
     processors:
+      filter/metrics-allowlist:
+        metrics:
+          include:
+            match_type: strict
+            metric_names:
+              # Kubernetes core signals
+              - db.client.connections.usage
+              - db.client.connections.max
+      
       resource/dbmon:
         attributes:
           - key: service.name
@@ -61,7 +70,7 @@ clusterReceiver:
       pipelines:
         metrics:
           receivers: [sqlserver]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter, batch, filter/metrics-allowlist]
           exporters: [otlphttp/splunk]
 
         logs/dbm:
